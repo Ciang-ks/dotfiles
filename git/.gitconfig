@@ -1,5 +1,5 @@
 [user]
-	name = Xuqi Jiang
-	email = 2300934059@stu.pku.edu.cn
-[core]
-	editor = vim
+        name = Xuqi Jiang
+        email = ciangks@outlook.com
+[init]
+        defaultBranch = main
