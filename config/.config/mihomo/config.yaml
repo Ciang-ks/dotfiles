@@ -63,7 +63,7 @@ proxy-providers:
   订阅一:
     <<: *p
     # path: ./proxy_provider/订阅一.yaml
-    url: "https://provider.wallesspku.space/clash/2400017727@stu.pku.edu.cn/S39L6G8U?group=gfw&client=clash-verge&version=v2.4.3"
+    url: "${SUBSCRIBE_URL_1}"
     # 如需要为该订阅组节点添加前缀，取消下面两行注释
     override:
       additional-prefix: "[订阅一]"
@@ -71,7 +71,7 @@ proxy-providers:
   订阅二:
     <<: *p
     # path: ./proxy_provider/订阅二.yaml
-    url: "https://provider.wallesspku.space/clash/2300934059@stu.pku.edu.cn/458wezsnya?group=gfw&client=clash-verge&version=v2.4.3"
+    url: "${SUBSCRIBE_URL_2}"
     # 如需要为该订阅组节点添加前缀，取消下面两行注释
     override:
       additional-prefix: "[订阅二]"
@@ -169,7 +169,7 @@ sniffer:
 
 # tun 模式
 tun:
-  enable: false # enable 'true'
+  enable: true # enable 'true'
   stack: system # or 'gvisor'
   dns-hijack:
     - "any:53"
@@ -180,7 +180,8 @@ dns:
   enable: true
   listen: :1053
   ipv6: false
-  enhanced-mode: redir-host
+  enhanced-mode: fake-ip
+  fake-ip-range: 198.18.0.1/16
 
   # 首先使用系统可以访问的 DNS
   nameserver:
@@ -313,7 +314,23 @@ proxy-groups:
   - { name: 自动选择, <<: *use, tolerance: 2, type: url-test }
 
 rules:
-  # 若需禁用 QUIC 请取消注释 QUIC 两条规则
+  # 1. 优先直连校园网认证域名和北大内网
+  - DOMAIN-SUFFIX,pku.edu.cn,DIRECT
+  - DOMAIN-KEYWORD,its4,DIRECT
+  - IP-CIDR,162.105.0.0/16,DIRECT
+  - IP-CIDR,222.29.0.0/16,DIRECT
+  - IP-CIDR,115.27.0.0/16,DIRECT
+
+  # 2. 优先直连 Tailscale 流量（防止 SSH 掉线）
+  - IP-CIDR,100.64.0.0/10,DIRECT
+  - DOMAIN-KEYWORD,tailscale,DIRECT
+
+  # 3. 局域网白名单
+  - IP-CIDR,127.0.0.0/8,DIRECT
+  - IP-CIDR,172.16.0.0/12,DIRECT
+  - IP-CIDR,192.168.0.0/16,DIRECT
+  - IP-CIDR,10.0.0.0/8,DIRECT
+
   # 防止 YouTube 等使用 QUIC 导致速度不佳, 禁用 443 端口 UDP 流量（不包括国内）
   # - AND,(AND,(DST-PORT,443),(NETWORK,UDP)),(NOT,((GEOSITE,cn))),REJECT
   # - AND,(AND,(DST-PORT,443),(NETWORK,UDP)),(NOT,((GEOIP,CN))),REJECT
